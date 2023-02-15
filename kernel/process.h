@@ -71,6 +71,9 @@ typedef struct process_t {
 
   // accounting. added @lab3_3
   int tick_count;
+
+  // block reason. added @lab3_challenge1
+  uint64 block_map;
 }process;
 
 // switch to run user app
@@ -98,5 +101,8 @@ extern process* current;
 
 // address of the first free page in our simple heap. added @lab2_2
 extern uint64 g_ufree_page;
+
+// added @lab3_challenge1
+uint64 my_wait(uint64 pid);
 
 #endif

@@ -18,6 +18,8 @@
 #include "sched.h"
 #include "spike_interface/spike_utils.h"
 
+#include "stdbool.h"
+
 //Two functions defined in kernel/usertrap.S
 extern char smode_trap_vector[];
 extern void return_to_user(trapframe *, uint64 satp);
@@ -157,6 +159,16 @@ int free_process( process* proc ) {
   // as it is different from regular OS, which needs to run 7x24.
   proc->status = ZOMBIE;
 
+
+ //added lab3_challenge1
+  if(proc->parent && proc->parent->status == BLOCKED && (proc->parent->block_map & (1<<proc->pid))){
+    //proc->parent->block_map = 0;
+    proc->parent->block_map ^= (1<<proc->pid);
+    if(proc->parent->block_map == 0){
+      proc->parent->status = READY;
+      insert_to_ready_queue(proc->parent);
+    }
+  }
   return 0;
 }
 
@@ -209,6 +221,27 @@ int do_fork( process* parent)
         child->mapped_info[child->total_mapped_region].seg_type = CODE_SEGMENT;
         child->total_mapped_region++;
         break;
+
+     //added lab3_challenge1
+      case DATA_SEGMENT:
+	for(int j = 0; j < parent->mapped_info[i].npages; j++){
+        uint64 parent_pa = lookup_pa(parent->pagetable, parent->mapped_info[i].va + j * PGSIZE);
+        if(parent_pa){
+          char* child_pa = alloc_page();
+          memcpy(child_pa, (void *)parent_pa, PGSIZE);
+          map_pages(child->pagetable, parent->mapped_info[i].va + j * PGSIZE, PGSIZE, (uint64)child_pa, prot_to_type(PROT_WRITE | PROT_READ, 1));
+            }
+        }
+        //map_pages(child->pagetable, 
+        //          parent->mapped_info[i].va, 
+        //          PGSIZE* parent->mapped_info[i].npages, 
+        //          (uint64)memcpy(alloc_page(), (void *)lookup_pa(parent->pagetable, parent->mapped_info[i].va), PGSIZE), 
+        //          prot_to_type(PROT_WRITE | PROT_READ | PROT_EXEC, 1));
+        child->mapped_info[child->total_mapped_region].va = parent->mapped_info[i].va;
+        child->mapped_info[child->total_mapped_region].npages = parent->mapped_info[i].npages;
+        child->mapped_info[child->total_mapped_region].seg_type = DATA_SEGMENT;
+        child->total_mapped_region++;
+        break;
     }
   }
 
@@ -219,3 +252,50 @@ int do_fork( process* parent)
 
   return child->pid;
 }
+
+
+
+
+//added lab3_challenge1
+uint64 my_wait(uint64 pid){
+  if(pid == -1){
+  //父进程等待任意一个子进程退出即返回子进程的pid
+    bool found = false;
+    for(int i = 0; i < NPROC; i++){
+      if(procs[i].parent == current){
+        found = true;
+        if(procs[i].status == ZOMBIE){
+          procs[i].status = FREE;
+          return procs[i].pid;
+        }
+        else
+          current->block_map |= 1<<procs[i].pid;
+      }
+    }
+    if(found) 
+      return -2;
+    else return -1;
+  }
+  else if(0 < pid && pid < NPROC){
+  //父进程等待进程号为pid的子进程退出即返回子进程的pid
+    if(procs[pid].parent != current)
+        //pid对应的进程不是当前进程的子进程
+        return -1;
+    if(procs[pid].status == ZOMBIE){
+        procs[pid].status = FREE;
+        return pid;
+    }
+    else{
+      current->block_map |= (1 << pid);
+      return -2;
+    }
+
+  }
+  // pid不合法
+  else return -1;
+
+
+}
+
+
+

@@ -13,6 +13,10 @@ typedef struct elf_info_t {
   process *p;
 } elf_info;
 
+//add @lab1_challenge1
+//move original local variable "elf_ctx elfloader" from load_bincode_from_host_elf(),
+elf_ctx elfloader;
+
 //
 // the implementation of allocater. allocates memory space for later segment loading
 //
@@ -114,7 +118,7 @@ void load_bincode_from_host_elf(process *p) {
   sprint("Application: %s\n", arg_bug_msg.argv[0]);
 
   //elf loading. elf_ctx is defined in kernel/elf.h, used to track the loading process.
-  elf_ctx elfloader;
+  // elf_ctx elfloader;
   // elf_info is defined above, used to tie the elf file and its corresponding process.
   elf_info info;
 
@@ -133,8 +137,38 @@ void load_bincode_from_host_elf(process *p) {
   // entry (virtual, also physical in lab1_x) address
   p->trapframe->epc = elfloader.ehdr.entry;
 
+  //add @lab1_challenge1
+  //load symbol table and string table from elf
+  if (elf_load_symtab_and_strtab(&elfloader) != EL_OK)
+    panic("fail to load symbol table.\n");
+
   // close the host spike file
   spike_file_close( info.f );
 
   sprint("Application program entry point (virtual address): 0x%lx\n", p->trapframe->epc);
+}
+
+//add @lab1_challenge1
+//load symbol table and string table
+elf_status elf_load_symtab_and_strtab(elf_ctx *ctx){
+  elf_section_header sh;
+  int offset = ctx->ehdr.shoff; //first section's address
+  int strlen = 0;
+  // load symbol table and string table
+  for (int i = 0; i < ctx->ehdr.shnum; i++){ //traversal all section 
+    if(elf_fpread(ctx, (void *)&sh, sizeof(sh), offset) != sizeof(sh))// read a section header
+      return EL_EIO;
+    if(sh.type == SHT_SYMTAB){
+      if(elf_fpread(ctx, &ctx->symtab, sh.size, sh.offset) != sh.size)//copy symbol table
+        return EL_EIO;
+      ctx->syms_num = sh.size / sizeof(elf_symtab_record);
+    }
+    else if(sh.type == SHT_STRTAB){
+      if(elf_fpread(ctx, &ctx->strtab + strlen, sh.size, sh.offset) != sh.size) //copy string table
+        return EL_EIO;
+      strlen += sh.size;
+    }
+    offset += sizeof(elf_section_header);
+  }
+  return EL_OK;
 }

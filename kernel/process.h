@@ -2,6 +2,7 @@
 #define _PROC_H_
 
 #include "riscv.h"
+#include <string.h>
 
 typedef struct trapframe_t {
   // space to store context (all common registers)

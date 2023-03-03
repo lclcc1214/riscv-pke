@@ -201,6 +201,12 @@ elf_status elf_load(elf_ctx *ctx) {
   // elf_prog_header structure is defined in kernel/elf.h
   elf_prog_header ph_addr;
   int i, off;
+  
+  //
+  // add @lab1_challenge2
+  // maxva变量存储程序各段虚拟地址的最大值
+  uint64 maxva = 0;
+
 
   // traverse the elf program segment headers
   for (i = 0, off = ctx->ehdr.phoff; i < ctx->ehdr.phnum; i++, off += sizeof(ph_addr)) {
@@ -217,8 +223,33 @@ elf_status elf_load(elf_ctx *ctx) {
     // actual loading
     if (elf_fpread(ctx, dest, ph_addr.memsz, ph_addr.off) != ph_addr.memsz)
       return EL_EIO;
+    //add @lab1_challenge2
+    if (ph_addr.vaddr + ph_addr.memsz > maxva)
+      maxva = ph_addr.vaddr + ph_addr.memsz;
   }
+  //add @lab1_challenge2
+  char name[16];
+  ((elf_info *)ctx->info)->p->debugline = NULL;
+  elf_sect_header strtab, temp;
 
+  //read string table ?
+  if(elf_fpread(ctx, (void *)&strtab, sizeof(strtab), ctx->ehdr.shoff + ctx->ehdr.shstrndx * sizeof(strtab)) != sizeof(strtab))
+    return EL_EIO;
+  //traverse all section header
+  int offset = ctx->ehdr.shoff;
+  for(int i = 0; i < ctx->ehdr.shnum; i++){
+    if(elf_fpread(ctx, (void *)&temp, sizeof(temp), offset) != sizeof(temp))
+      return EL_EIO;
+    //?
+    elf_fpread(ctx, (void *)name, 20, strtab.offset + temp.name);
+    if(strcmp(name, ".debug_line") == 0){
+      if(elf_fpread(ctx, (void *)maxva, temp.size, temp.offset) != temp.size)
+        return EL_EIO;
+      make_addr_line(ctx, (char *)maxva, temp.size);
+      break;
+    }
+    offset += sizeof(temp);
+  }
   return EL_OK;
 }
 

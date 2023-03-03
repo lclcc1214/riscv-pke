@@ -3,7 +3,7 @@
 #include "spike_interface/spike_utils.h"
 
 // add @lab1_challlenge2
-#define max_code_size 10240
+#define max_code_size 1024
 
 static void handle_instruction_access_fault() { panic("Instruction access fault!"); }
 

@@ -33,6 +33,7 @@ static void handle_timer() {
 void illegal_line_print(addr_line *illegal_line){
 
   //目录长度
+  //error 1
   int dir_len = strlen(current->dir[current->file[illegal_line->file].dir]);
   //文件长度
   int file_len = strlen(current->file[illegal_line->file].file);
@@ -46,6 +47,7 @@ void illegal_line_print(addr_line *illegal_line){
   path[dir_len] = '/';
   //拷贝文件
   strcpy(path + dir_len + 1, current->file[illegal_line->file].file);
+  //error 2
   //path[path_len] = '\0';
 
   //打开文件
@@ -59,6 +61,8 @@ void illegal_line_print(addr_line *illegal_line){
       //实际从第一行开始
       if(current_line == illegal_line->line){
         code[i] = '\0';
+        //error 3
+        //sprint("Runtime error at %s:%d\n%s\n", path, current_line, code + line_head);
         sprint("Runtime error at %s:%d\n%s\n", path, illegal_line->line, code + line_head);
         break;
       }

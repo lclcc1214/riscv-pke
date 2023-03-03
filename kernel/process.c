@@ -219,3 +219,64 @@ int do_fork( process* parent)
 
   return child->pid;
 }
+
+
+// add @lab3_challenge2
+// all semaphore
+semaphore sems[NPROC];
+
+// alloc semaphore
+int create_sem(int init_value){
+  //信号灯初值不能为负值
+  if(init_value < 0)
+    return -1;
+  for(int i = 0;i < NPROC; i++){
+    if(sems[i].free == 0){//信号灯未被占用
+      sems[i].free = 1;
+      sems[i].value = init_value;
+      sems[i].wait_queue_head = sems[i].wait_queue_tail = NULL;
+      return i;
+    }
+  }
+  return -1;//所有信号灯都已被占用
+}
+
+int op_P(int sem){
+  //信号灯非法
+  if(sem < 0 || sem >= NPROC)
+    return -1;
+  sems[sem].value --;
+  if(sems[sem].value < 0){
+    if(sems[sem].wait_queue_head == NULL){
+      sems[sem].wait_queue_head = sems[sem].wait_queue_tail = current;
+      //current->queue_next = NULL;
+    }
+    else{
+      sems[sem].wait_queue_tail->queue_next = current;
+      sems[sem].wait_queue_tail = sems[sem].wait_queue_tail->queue_next;
+    }
+    current->status = BLOCKED;
+    schedule();
+  }
+  return 0;
+}
+
+int op_V(int sem){
+  //信号灯非法
+  if(sem < 0 || sem >= NPROC)
+    return -1;
+  sems[sem].value ++ ;
+  if(sems[sem].wait_queue_head != NULL){//等待队列不为空
+    process *temp = sems[sem].wait_queue_head;
+    if(sems[sem].wait_queue_head == sems[sem].wait_queue_tail){//等待队列已空
+      sems[sem].wait_queue_head = sems[sem].wait_queue_tail = NULL;
+    }
+    else{
+      sems[sem].wait_queue_head = sems[sem].wait_queue_head->queue_next;
+    }
+    // temp->status = READY;
+    insert_to_ready_queue(temp);
+  }
+  return 0;
+}
+

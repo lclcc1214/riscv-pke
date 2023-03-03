@@ -76,3 +76,24 @@ int fork() {
 void yield() {
   do_user_call(SYS_user_yield, 0, 0, 0, 0, 0, 0, 0);
 }
+
+//
+// add @lab3_challenge2 lib to call new_sem
+//
+int sem_new(int value) {
+  return do_user_call(SYS_user_sem_new, value, 0, 0, 0, 0, 0, 0);
+}
+
+//
+// add @lab3_challenge2 lib to call P_sem
+//
+int sem_P(int sem){
+  return do_user_call(SYS_user_sem_P, sem, 0, 0, 0, 0, 0, 0);
+}
+
+//
+// add @lab3_challenge2 lib to call V_sem
+//
+int sem_V(int sem){
+  return do_user_call(SYS_user_sem_V, sem, 0, 0, 0, 0, 0, 0);
+}

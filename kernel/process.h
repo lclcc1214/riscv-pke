@@ -99,4 +99,17 @@ extern process* current;
 // address of the first free page in our simple heap. added @lab2_2
 extern uint64 g_ufree_page;
 
+// add @lab3_challenge2
+typedef struct semaphore_t {
+  int value;
+  process *wait_queue_head;
+  process *wait_queue_tail;
+  int free;
+} semaphore;
+
+int create_sem(int init_value);
+int op_P(int semaphore);
+int op_V(int semaphore);
+
+
 #endif

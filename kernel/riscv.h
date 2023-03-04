@@ -4,6 +4,10 @@
 #include "util/types.h"
 #include "config.h"
 
+// add @lab2_challenge2
+#define PAGE_UP_ALIGN(sz)  (((sz)+PGSIZE-1) & ~(PGSIZE-1))
+#define PAGE_DOWN_ALIGN(a) (((a)) & ~(PGSIZE-1))
+
 // fields of mstatus, the Machine mode Status register
 #define MSTATUS_MPP_MASK (3L << 11) // previous mode mask
 #define MSTATUS_MPP_M (3L << 11)    // machine mode (m-mode)

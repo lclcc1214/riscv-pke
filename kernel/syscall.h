@@ -11,7 +11,8 @@
 // added @lab2_2
 #define SYS_user_allocate_page (SYS_user_base + 2)
 #define SYS_user_free_page (SYS_user_base + 3)
-
+// add @lab2_challenge2
+uint64 sys_user_alloc_space(uint64 size);
 long do_syscall(long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7);
 
 #endif

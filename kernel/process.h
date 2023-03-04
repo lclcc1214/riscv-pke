@@ -26,6 +26,11 @@ typedef struct process_t {
   pagetable_t pagetable;
   // trapframe storing the context of a (User mode) process.
   trapframe* trapframe;
+
+  // add @lab2_challenge2
+  uint64 heap_start;
+  uint64 heap_mem_head;
+  uint64 heap_mem_tail;
 }process;
 
 // switch to run user app
@@ -36,5 +41,9 @@ extern process* current;
 
 // address of the first free page in our simple heap. added @lab2_2
 extern uint64 g_ufree_page;
+
+// add @lab2_challenge2
+int alloc_space(uint64 size);
+
 
 #endif

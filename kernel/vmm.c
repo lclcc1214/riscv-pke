@@ -11,6 +11,10 @@
 #include "spike_interface/spike_utils.h"
 #include "util/functions.h"
 
+// add @lab2_challenge2
+#include "syscall.h"
+#include "process.h"
+
 /* --- utility functions for virtual address mapping --- */
 //
 // establish mapping of virtual address [va, va+size] to phyiscal address [pa, pa+size]
@@ -192,4 +196,91 @@ void user_vm_unmap(pagetable_t page_dir, uint64 va, uint64 size, int free) {
   uint64 pa = lookup_pa(page_dir, va);
   free_page((void *)pa);
 
+}
+
+//
+// add @lab2_challenge2
+//
+uint64 user_vm_malloc_space(pagetable_t pagetable, uint64 head, uint64 tail)
+{
+  if(head > tail)
+    return head;
+  ;
+  // 对齐向上页面
+  head = PAGE_UP_ALIGN(head);
+  for(uint64 i = head; i < tail; i += PGSIZE)
+  {
+    // 分配新页面
+    char *new_page;
+    if((new_page = (char *)alloc_page()) == 0)
+      panic("failed to user_vm_malloc .\n");
+    // 初始化新页面
+    memset(new_page,0,sizeof(uint8) * PGSIZE);
+    // 将虚拟地址映射到新页面
+    map_pages(pagetable, head, PGSIZE, (uint64)new_page, prot_to_type(PROT_READ | PROT_WRITE,1) );
+  }
+  return tail;
+}
+
+int init_mem_pool = 0;
+
+// add @lab2_challenge2
+// 优先从内存池中获取申请的空间，若内存池中没有满足要求的，则从物理内存中创建内存块并放入进程的内存池中。
+uint64 better_alloc_page(int size){
+  // 初始化内存池
+  if(init_mem_pool == 0){
+    uint64 addr = current->heap_start = USER_FREE_ADDRESS_START;
+    alloc_space(sizeof(mem_ctrl_block));
+    pte_t *pte = page_walk(current->pagetable, addr, 0);
+    mem_ctrl_block *fst_ctrl_block = (mem_ctrl_block *) PTE2PA(*pte);
+    current->heap_mem_head = (uint64) fst_ctrl_block;
+    fst_ctrl_block->next = fst_ctrl_block;
+    fst_ctrl_block->size = 0;
+    current->heap_mem_tail = (uint64)fst_ctrl_block;
+    init_mem_pool = 1;
+  }
+
+  mem_ctrl_block *head = (mem_ctrl_block *)current->heap_mem_head;
+  mem_ctrl_block *tail = (mem_ctrl_block *)current->heap_mem_tail;
+  
+  //查找是否有可用的内存块
+  while (1){
+      if(head->size >= size && head->available){
+          head->available = 0;
+          return head->offset + sizeof(mem_ctrl_block);
+      }
+      if(head->next == tail) break;//?
+      head = head->next;
+  }
+  // 没有可用的内存块
+  // 向内核申请在heap中增加sizeof(mem_ctrl_block) + size 个字节的大小，生成一个内存块并加入内存池中
+  uint64 alloc_addr = current->heap_start;
+  alloc_space((uint64)(sizeof(mem_ctrl_block) + size + 8));
+  pte_t *pte = page_walk(current->pagetable, alloc_addr, 0);
+  mem_ctrl_block *now = (mem_ctrl_block *)(PTE2PA(*pte) + (alloc_addr & 0xfff));
+  uint64 amo = (8 - ((uint64)now % 8))%8;
+  now = (mem_ctrl_block *)((uint64)now + amo);
+
+  now->available = 0;
+  now->offset = alloc_addr;
+  now->size = size;
+  now->next = head->next;
+  
+  head->next = now;
+  head = (mem_ctrl_block *)current->heap_mem_head;
+//   current->heap_mem_tail = (uint64)now;
+  return alloc_addr + sizeof(mem_ctrl_block);
+}
+
+// add @lab2_challenge2
+//根据参数提供的虚拟地址，寻找到对应的物理地址，并找到其控制块，将该内存块放入进程的内存池中
+void better_free_page(void *addr){
+  addr = (void *)((uint64)addr - sizeof(mem_ctrl_block));
+  pte_t *pte = page_walk(current->pagetable, (uint64)(addr), 0);
+  mem_ctrl_block *now = (mem_ctrl_block *)(PTE2PA(*pte) + ((uint64)addr & 0xfff));
+  uint64 amo = (8 - ((uint64)now % 8))%8;
+  now = (mem_ctrl_block *)((uint64)now + amo);
+  if(now->available)
+      panic("in free function, the memory has been freed before! \n");
+  now->available = 1;
 }

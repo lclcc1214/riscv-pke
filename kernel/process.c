@@ -64,3 +64,15 @@ void switch_to(process* proc) {
   // note, return_to_user takes two parameters @ and after lab2_1.
   return_to_user(proc->trapframe, user_satp);
 }
+
+// add @lab_challenge2
+int alloc_space(uint64 size){
+  // 申请空间大小非负
+  if(size < 0)
+    panic("failed in function malloc_space.\n");
+  uint64 addr = current->heap_start;
+  // 对进程的pagetable在addr + size之前的地址进行映射
+  user_vm_malloc_space(current->pagetable, addr, addr + size);
+  current->heap_start = addr + size;
+  return 0;
+}

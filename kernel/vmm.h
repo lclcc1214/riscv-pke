@@ -31,4 +31,18 @@ void *user_va_to_pa(pagetable_t page_dir, void *va);
 void user_vm_map(pagetable_t page_dir, uint64 va, uint64 size, uint64 pa, int perm);
 void user_vm_unmap(pagetable_t page_dir, uint64 va, uint64 size, int free);
 
+
+// add @lab2_challenge2
+// memory control block.
+typedef struct mem_ctrl_block_t{
+    int available;
+    int size;
+    uint64 offset;
+    struct mem_ctrl_block_t *next;
+}mem_ctrl_block;
+
+
+uint64 user_vm_malloc_space(pagetable_t pagetable, uint64 head, uint64 tail);
+uint64 better_alloc_page(int size);
+void better_free_page(void *addr);
 #endif

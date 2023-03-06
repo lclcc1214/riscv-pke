@@ -43,11 +43,11 @@ int backtrace_symbol(uint64 ra){
   uint64 func_va = 0;
   int idx = -1;
   for(int i = 0; i < elfloader.syms_num; i++){
-    if(elfloader.symtab[i].st_info == STT_FUNC 
-       && elfloader.symtab[i].st_value < ra
-       && elfloader.symtab[i].st_value > func_va){
+    if(elfloader.symtab[i].info == STT_FUNC 
+       && elfloader.symtab[i].value < ra
+       && elfloader.symtab[i].value > func_va){
       idx = i;
-      func_va = elfloader.symtab[i].st_value;
+      func_va = elfloader.symtab[i].value;
     }
   }
   return idx;
@@ -78,7 +78,7 @@ ssize_t sys_user_backtrace(uint64 depth) {
       sprint("fail to backtrace symbol %lx\n", *(uint64 *)p);
       continue;
     }
-    sprint("%s\n", &elfloader.strtab[elfloader.symtab[symtab_idx].st_name]);
+    sprint("%s\n", &elfloader.strtab[elfloader.symtab[symtab_idx].name]);
   } 
   return 0;
 }

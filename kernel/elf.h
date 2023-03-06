@@ -72,15 +72,14 @@ typedef enum elf_status_t {
 } elf_status;
 
 // added @lab1_challenge1
-// the symbol table record, each record stores information of a symbol
+// the symbol table record, each record is a symbol's information
 typedef struct {
-// st_name is the offset in string table.
-  uint32 st_name;         /* Symbol name (string tbl index) */
-  unsigned char st_info;  /* Symbol type and binding */
-  unsigned char st_other; /* Symbol visibility */
-  uint16 st_shndx;        /* Section index */
-  uint64 st_value;        /* Symbol value */
-  uint64 st_size;         /* Symbol size */
+  uint32 name;
+  unsigned char info;
+  unsigned char other;
+  uint16 shndx;
+  uint64 value;
+  uint64 size;
 } elf_symtab_record;
 
 typedef struct elf_ctx_t {
@@ -88,12 +87,9 @@ typedef struct elf_ctx_t {
   elf_header ehdr;
   
   //add @lab1_challenge1
-  //string table in elf
-  char strtab[4096];
-  //symbol table in elf
-  elf_symtab_record symtab[128];
-  //the number of symbol table
-  uint64 syms_num;
+  char strtab[4096];              //string table in elf
+  elf_symtab_record symtab[128];  //symbol table in elf
+  uint64 syms_num;                //the number of symbol table
 } elf_ctx;
 
 elf_status elf_init(elf_ctx *ctx, void *info);

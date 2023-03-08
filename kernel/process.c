@@ -65,7 +65,7 @@ void switch_to(process* proc) {
   return_to_user(proc->trapframe, user_satp);
 }
 
-// add @lab_challenge2
+// add @lab2_challenge2
 int alloc_space(uint64 size){
   // 申请空间大小非负
   if(size < 0)

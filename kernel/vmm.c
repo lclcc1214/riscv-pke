@@ -205,7 +205,7 @@ uint64 user_vm_malloc_space(pagetable_t pagetable, uint64 head, uint64 tail)
 {
   if(head > tail)
     return head;
-  ;
+
   // 对齐向上页面
   head = PAGE_UP_ALIGN(head);
   for(uint64 i = head; i < tail; i += PGSIZE)
@@ -257,16 +257,16 @@ uint64 better_alloc_page(int size){
   uint64 alloc_addr = current->heap_start;
   alloc_space((uint64)(sizeof(mem_ctrl_block) + size + 8));
   pte_t *pte = page_walk(current->pagetable, alloc_addr, 0);
-  mem_ctrl_block *now = (mem_ctrl_block *)(PTE2PA(*pte) + (alloc_addr & 0xfff));
-  uint64 amo = (8 - ((uint64)now % 8))%8;
-  now = (mem_ctrl_block *)((uint64)now + amo);
+  mem_ctrl_block *new = (mem_ctrl_block *)(PTE2PA(*pte) + (alloc_addr & 0xfff));
+  uint64 am = (8 - ((uint64)new % 8))%8;
+  new = (mem_ctrl_block *)((uint64)new + am);
 
-  now->available = 0;
-  now->offset = alloc_addr;
-  now->size = size;
-  now->next = head->next;
+  new->available = 0;
+  new->size = size;
+  new->offset = alloc_addr;
+  new->next = head->next;
   
-  head->next = now;
+  head->next = new;
   head = (mem_ctrl_block *)current->heap_mem_head;
 //   current->heap_mem_tail = (uint64)now;
   return alloc_addr + sizeof(mem_ctrl_block);
@@ -277,10 +277,10 @@ uint64 better_alloc_page(int size){
 void better_free_page(void *addr){
   addr = (void *)((uint64)addr - sizeof(mem_ctrl_block));
   pte_t *pte = page_walk(current->pagetable, (uint64)(addr), 0);
-  mem_ctrl_block *now = (mem_ctrl_block *)(PTE2PA(*pte) + ((uint64)addr & 0xfff));
-  uint64 amo = (8 - ((uint64)now % 8))%8;
-  now = (mem_ctrl_block *)((uint64)now + amo);
-  if(now->available)
+  mem_ctrl_block *old = (mem_ctrl_block *)(PTE2PA(*pte) + ((uint64)addr & 0xfff));
+  uint64 am = (8 - ((uint64)old % 8))%8;
+  old = (mem_ctrl_block *)((uint64)old + am);
+  if(old->available)
       panic("in free function, the memory has been freed before! \n");
-  now->available = 1;
+  old->available = 1;
 }

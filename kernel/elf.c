@@ -232,13 +232,13 @@ elf_status elf_load(elf_ctx *ctx) {
   ((elf_info *)ctx->info)->p->debugline = NULL;
   elf_sect_header strtab, temp;
 
-  //read string table ?
-  if(elf_fpread(ctx, (void *)&strtab, sizeof(strtab), ctx->ehdr.shoff + ctx->ehdr.shstrndx * sizeof(strtab)) != sizeof(strtab))
+  //read string table
+  if(elf_fpread(ctx, (void *)&strtab, sizeof(elf_sect_header), ctx->ehdr.shoff + ctx->ehdr.shstrndx * sizeof(elf_sect_header)) != sizeof(elf_sect_header))
     return EL_EIO;
   //traverse all section header
   int offset = ctx->ehdr.shoff;
   for(int i = 0; i < ctx->ehdr.shnum; i++){
-    if(elf_fpread(ctx, (void *)&temp, sizeof(temp), offset) != sizeof(temp))
+    if(elf_fpread(ctx, (void *)&temp, sizeof(elf_sect_header), offset) != sizeof(elf_sect_header))
       return EL_EIO;
     //?
     elf_fpread(ctx, (void *)name, 20, strtab.offset + temp.name);
@@ -248,7 +248,7 @@ elf_status elf_load(elf_ctx *ctx) {
       make_addr_line(ctx, (char *)maxva, temp.size);
       break;
     }
-    offset += sizeof(temp);
+    offset += sizeof(elf_sect_header);
   }
   return EL_OK;
 }

@@ -81,7 +81,7 @@ void illegal_line_print(addr_line *illegal_line){
 //
 // add @lab1_challenge2
 //
-void error_print(){
+void error_output(){
   //使用read_csr函数找到断点,断点的位置就是在mepc这个地方.
   uint64 mepc = read_csr(mepc);
   //找到断点这条指令对应的addr_line结构体
@@ -106,21 +106,21 @@ void handle_mtrap() {
       break;
     case CAUSE_FETCH_ACCESS:
       // add @lab1_challenge2
-      error_print();
+      error_output();
       handle_instruction_access_fault();
       break;
     case CAUSE_LOAD_ACCESS:
       // add @lab1_challenge2
-      error_print();
+      error_output();
       handle_load_access_fault();
     case CAUSE_STORE_ACCESS:
       // add @lab1_challenge2
-      error_print();
+      error_output();
       handle_store_access_fault();
       break;
     case CAUSE_ILLEGAL_INSTRUCTION:
       // add @lab1_challenge2
-      error_print();
+      error_output();
 
       // TODO (lab1_2): call handle_illegal_instruction to implement illegal instruction
       // interception, and finish lab1_2.
@@ -129,12 +129,12 @@ void handle_mtrap() {
       break;
     case CAUSE_MISALIGNED_LOAD:
       // add @lab1_challenge2
-      error_print();
+      error_output();
       handle_misaligned_load();
       break;
     case CAUSE_MISALIGNED_STORE:
       // add @lab1_challenge2
-      error_print();
+      error_output();
       handle_misaligned_store();
       break;
 
